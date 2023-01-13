@@ -144,7 +144,6 @@ class Reporter {
                 const testData = new TestData(test);
 
                 const foundCaseIDs = this.testCaseParser.searchCaseId(testData.getTitle());
-
                 foundCaseIDs.forEach((singleCase) => {
                     this.foundCaseIds.push(singleCase);
                 });
@@ -183,15 +182,13 @@ class Reporter {
      * @private
      */
     async _sendSpecResults(spec, results) {
-        const allRequests = [];
-
         // iterate through all our test results
         // and send the data to TestRail
-        await results.tests.forEach(async (test) => {
+        let result = []
+        results.tests.forEach(async (test) => {
             const testData = new TestData(test);
 
             const foundCaseIDs = this.testCaseParser.searchCaseId(testData.getTitle());
-
             foundCaseIDs.forEach((caseId) => {
                 let status = this.statusPassed;
 
@@ -232,14 +229,10 @@ class Reporter {
                 if (testData.getError() !== '') {
                     comment += '\nError: ' + testData.getError();
                 }
-
-                const result = new Result(caseId, status, comment, testData.getDurationMS(), screenshotPath);
-                const request = this.testrail.sendResult(this.runId, result);
-                allRequests.push(request);
+                result.push(new Result(caseId, status, comment, testData.getDurationMS(), screenshotPath));        
             });
         });
-
-        await Promise.all(allRequests);
+        await this.testrail.sendResult(this.runId, result)
     }
 
     /**

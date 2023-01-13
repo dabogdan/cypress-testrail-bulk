@@ -105,36 +105,39 @@ class TestRail {
      * @param result
      */
     sendResult(runID, result) {
-        const postData = {
-            results: [
-                {
-                    case_id: result.getCaseId(),
-                    status_id: result.getStatusId(),
-                    comment: result.getComment().trim(),
-                },
-            ],
-        };
+        const data = result.map(res => {
+            return {
+                case_id: res.getCaseId(),
+                status_id: res.getStatusId(),
+                comment: res.getComment().trim(),
+            }
+        })
 
         // 0s is not valid
-        if (result.getElapsed() !== '0s') {
-            postData.results[0].elapsed = result.getElapsed();
-        }
+        result.forEach((res, i) => {
+            if (res.getElapsed() !== '0s') {
+                data[i].elapsed = res.getElapsed();
+            }}
+        )
+
+        const postData = { results: [...data] }
 
         return this.client.sendData(
             '/add_results_for_cases/' + runID,
             postData,
             (response) => {
-                const resultId = response.data[0].id;
+                ColorConsole.success('Test results are sent to TestRail for TestCases: ' + result.map(res => res.getCaseId()))
 
-                ColorConsole.success('  TestRail result ' + resultId + ' sent for TestCase C' + result.getCaseId());
-
-                if (this.isScreenshotsEnabled && result.getScreenshotPath() !== null && result.getScreenshotPath() !== '') {
-                    ColorConsole.debug('    sending screenshot to TestRail for TestCase C' + result.getCaseId());
-                    this.client.sendScreenshot(resultId, result.getScreenshotPath(), null, null);
-                }
+                result.forEach((result, i)=> {
+                    if (this.isScreenshotsEnabled && result.getScreenshotPath() !== null && result.getScreenshotPath() !== '') {
+                        ColorConsole.debug('    sending screenshot to TestRail for TestCase C' + result.getCaseId());
+                        this.client.sendScreenshot(response.data[i].id, result.getScreenshotPath(), null, null);
+                    }    
+                });
+                
             },
             (statusCode, statusText, errorText) => {
-                ColorConsole.error('  Could not send TestRail result for case C' + result.getCaseId() + ': ' + statusCode + ' ' + statusText + ' >> ' + errorText);
+                ColorConsole.error('  Could not send TestRail result for test cases ' + result.map(res => res.getCaseId()) + ': ' + statusCode + ' ' + statusText + ' >> ' + errorText);
                 ColorConsole.debug('');
             }
         );

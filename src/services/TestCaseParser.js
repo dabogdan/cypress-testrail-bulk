@@ -5,18 +5,18 @@ class TestCaseParser {
      * @returns {string[]|*[]}
      */
     searchCaseId(title) {
-        const trimmedTitle = title.trim();
+        // const trimmedTitle = title.trim();
 
         const foundCases = [];
-
-        if (trimmedTitle.includes(':')) {
-            const caseSection = trimmedTitle.substring(0, trimmedTitle.indexOf(':'));
-
-            const cases = caseSection.split(' ');
-
+        const regex = /[C][0-9]+/;
+        if (title.match(regex)) {
+            const cases = title.split(' ');
+            
             cases.forEach((singleCase) => {
-                if (singleCase.startsWith('C')) {
+                if (singleCase.match(regex) && singleCase.startsWith('C')) {
                     singleCase = singleCase.replace('C', '');
+                    singleCase = singleCase.replace(':', '');
+                    singleCase = singleCase.replace(',', '');
                     foundCases.push(singleCase);
                 }
             });
